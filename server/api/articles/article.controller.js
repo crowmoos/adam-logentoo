@@ -27,7 +27,7 @@ class ArticlesController {
         log.error(err);
         return next(new errors.InvalidContentError(err.errors.name.message));
       }
-      res.send(docs);
+      res.json(docs);
       next();
     });
   }

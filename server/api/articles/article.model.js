@@ -1,19 +1,19 @@
 const mongoose = require('mongoose')
 
 let articleModel = new mongoose.Schema({
-    links: {
+    articles: {
         title: String,
         imgSrc: String,
         link: String,
-        price : String,
+        price : Number,
         city : String,
+        postCode: Number,
         rooms : Number,
         surface : Number
     },
     status: {
         enum: ['pending', 'complete', 'overdue']
     },
-}, { minimize: false })
-
+  }, { minimize: false })
 ;
-module.exports = mongoose.model('link', articleModel);
+  module.exports = mongoose.model('article', articleModel);
