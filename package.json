@@ -1,0 +1,17 @@
+{
+  "name": "adam-logentoo",
+  "version": "1.0.0",
+  "description": "server side for logentoo",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "icewassim",
+  "license": "ISC",
+  "dependencies": {
+    "bunyan": "^1.8.10",
+    "bunyan-winston-adapter": "^0.2.0",
+    "restify": "^4.3.0",
+    "winston": "^2.3.1"
+  }
+}
