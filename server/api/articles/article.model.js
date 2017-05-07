@@ -7,9 +7,11 @@ let articleModel = new mongoose.Schema({
         link: String,
         price : Number,
         city : String,
-        postCode: Number,
+        zipCode: Number,
         rooms : Number,
-        surface : Number
+        surface : Number,
+        isPro: Number,
+        isPerso: Number,
     },
     status: {
         enum: ['pending', 'complete', 'overdue']
