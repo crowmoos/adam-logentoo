@@ -3,6 +3,8 @@
 const errors = require('restify-errors');
 const articlesCollection = require('./article.model');
 const winston = require('winston');
+const DECREMENTAL = -1;
+const INCREMENTAL = 1;
 
 const log = new winston.Logger({
     transports: [
@@ -46,6 +48,7 @@ class ArticlesController {
     let typeLocation = [];
     let zipCodesQuery = {};
     let query;
+    let sortBy = { date : DECREMENTAL};
 
     if(!req.params) {
       res.status(500).json({error:'bad request missing params'});
@@ -90,8 +93,11 @@ class ArticlesController {
       query.price = priceQuery;
     }
 
-    console.log('zipCodes ', zipCodesQuery);
-    console.log('typeLocation', typeLocation);
+    if(req.params.nbrRooms && req.params.nbrRooms.length !== 0) {
+      query.rooms = {'$in' : req.params.nbrRooms.map(elm => parseInt(elm))};
+    }
+
+
 
     articlesCollection.find(query, (err, doc) => {
       if(err) {
@@ -99,10 +105,8 @@ class ArticlesController {
       }
       res.send(doc);
       next();
-    });
+    }).sort(sortBy);
   }
-
-
 
 }
 
