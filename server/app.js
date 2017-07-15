@@ -1,88 +1,56 @@
 'use strict'
 
-/**
- * Module Dependencies
- */
-const config        = require('./config'),
-      restify       = require('restify'),
-      bunyan        = require('bunyan'),
-      winston       = require('winston'),
-      bunyanWinston = require('bunyan-winston-adapter'),
-      mongoose      = require('mongoose')
-;
+const restify       = require('restify');
+const bunyan        = require('bunyan');
+const bunyanWinston = require('bunyan-winston-adapter');
+const mongoose      = require('mongoose');
 
-let log;
+const config        = require('./config');
+const loggerConf    = require('./config/logger.js');
+
 let server;
 let db;
 
-
-/**
- * Logging
- */
-log = new winston.Logger({
-    transports: [
-        new winston.transports.Console({
-            level: 'info',
-            timestamp: () => {
-                return new Date().toString()
-            },
-            json: true
-        }),
-    ]
-})
-;
+loggerConf.initLogger();
 
 server = restify.createServer({
   name    : config.name,
   version : config.version,
-  log     : bunyanWinston.createAdapter(log),
-})
-
-/**
- * Middleware
- */
-server.use(restify.jsonBodyParser({ mapParams: true }))
-server.use(restify.acceptParser(server.acceptable))
-server.use(restify.queryParser({ mapParams: true }))
-server.use(restify.fullResponse())
-
-/**
- * Error Handling
- */
-server.on('uncaughtException', (req, res, route, err) => {
-    log.error(err.stack)
-    res.send(err)
+  log     : bunyanWinston.createAdapter(loggerT),
 });
 
-/**
- * Lift Server, Connect to DB & Bind Routes
- */
-server.listen(config.port, function() {
+server.use(restify.jsonBodyParser({ mapParams: true }));
+server.use(restify.acceptParser(server.acceptable));
+server.use(restify.queryParser({ mapParams: true }));
+server.use(restify.fullResponse());
 
+server.on('uncaughtException', (req, res, route, err) => {
+    loggerT.error(err.stack);
+    res.send(err);
+});
+
+server.listen(config.port, function() {
     mongoose.connection.on('error', function(err) {
-        log.error('Mongoose default connection error: ' + err)
-        process.exit(1)
+        loggerT.error('Mongoose default connection error: ', err);
+        process.exit(1);
     })
 
     mongoose.connection.on('open', function(err) {
-
         if (err) {
-            log.error('Mongoose default connection error: ' + err)
-            process.exit(1)
+            loggerT.error('Mongoose default connection error: ', err);
+            process.exit(1);
         }
 
-        log.info(
+        loggerT.info(
             '%s v%s ready to accept connections on port %s in %s environment.',
             server.name,
             config.version,
             config.port,
             config.env
-        )
+        );
 
         require('./routes')(server);
+    });
 
-    })
-
-    db = mongoose.connect(config.db.uri)
-
-})
+    db = mongoose.connect(config.db.uri);
+});

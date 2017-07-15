@@ -3,30 +3,31 @@
 const errors = require('restify-errors');
 const articlesCollection = require('./article.model');
 const winston = require('winston');
-const DECREMENTAL = -1;
-const INCREMENTAL = 1;
 
-const log = new winston.Logger({
-    transports: [
-        new winston.transports.Console({
-            level: 'info',
-            timestamp: () => {
-                return new Date().toString()
-            },
-            json: true
-        }),
-    ]
-})
-;
+const SORTING = {
+  PRICE: 'price',
+  SURFACE: 'surface',
+  ROOMS: 'rooms',
+  DECREMENTAL:-1,
+  INCREMENTAL: 1,
+}
+const ARTICLE_TYPE = {
+  STUDIO: 0,
+  APPARTEMENT: 1,
+  MAISON: 2,
+  GARAGE: 3,
+  OTHERS: 4,
+}
 
 class ArticlesController {
   constructor() {
+
   }
 
   getArticles(req, res, next) {
     articlesCollection.find({}, (err, docs) => {
       if(err) {
-        log.error(err);
+        loggerT.error(err);
         return next(new errors.InvalidContentError(err.errors.name.message));
       }
       res.json(docs);
@@ -45,45 +46,59 @@ class ArticlesController {
   }
 
   getArticlesPostParams(req, res, next) {
-    let typeLocation = [];
-    let zipCodesQuery = {};
-    let query;
-    let sortBy = { date : DECREMENTAL};
+    let articleTypes = [],
+        priceQuery,
+        zipCodesList,
+        query,
+        sortBy,
+        isPro,
+        isPerso
+    ;
+
+    loggerT.info(req.params);
 
     if(!req.params) {
       res.status(500).json({error:'bad request missing params'});
       return;
     }
 
-    let isPro = req.params.isPro + 0 ;
-    let isPerso = req.params.isPerso + 0 ;
+    isPro = req.params.isPro + 0 ;
+    isPerso = req.params.isPerso + 0 ;
 
-    if(req.params.isStudio) {
-      typeLocation.push(0);
-    }
-    if(req.params.isMaison) {
-      typeLocation.push(1);
-    }
-    if(req.params.isAppart) {
-      typeLocation.push(2);
-    }
-    if(req.params.isGarage) {
-      typeLocation.push(3);
+    req.params.isStudio && articleTypes.push(ARTICLE_TYPE.STUDIO);
+    req.params.isMaison && articleTypes.push(ARTICLE_TYPE.MAISON);
+    req.params.isAppart && articleTypes.push(ARTICLE_TYPE.APPARTEMENT);
+    req.params.isGarage && articleTypes.push(ARTICLE_TYPE.GARAGE);
+
+    loggerT.info("is array : ", Array.isArray(articleTypes));
+
+    switch (req.params.sort) {
+      case SORTING.PRICE:
+        sortBy = { price: SORTING.INCREMENTAL}
+        break;
+      case SORTING.SURFACE:
+        sortBy = { surface: SORTING.DECREMENTAL}
+        break;
+      case SORTING.ROOMS:
+        sortBy = { rooms: SORTING.DECREMENTAL}
+        break;
+      default:
+        sortBy = { date : SORTING.DECREMENTAL};
     }
 
     query = {
         '$or':[{'isPerso': isPerso},{'isPro': isPro}],
-        'type' : {'$in' : typeLocation},
+        'type' : {'$in' : articleTypes},
       }
     ;
 
     if(req.params.zipCodes && req.params.zipCodes.length > 0) {
-      let zipCodesList = req.params.zipCodes;
+      zipCodesList = req.params.zipCodes;
       query.zipCode = {'$in' : zipCodesList};
     }
 
     if(req.params.price) {
-      let priceQuery = {};
+      priceQuery = {};
       if(req.params.price.lower) {
         priceQuery['$gt'] = req.params.price.lower;
       }
@@ -97,8 +112,6 @@ class ArticlesController {
       query.rooms = {'$in' : req.params.nbrRooms.map(elm => parseInt(elm))};
     }
 
-
-
     articlesCollection.find(query, (err, doc) => {
       if(err) {
         return next(new errors.InvalidContentError(err));
@@ -107,7 +120,6 @@ class ArticlesController {
       next();
     }).sort(sortBy);
   }
-
 }
 
 module.exports = new ArticlesController();
