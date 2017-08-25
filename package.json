@@ -13,6 +13,7 @@
     "bunyan": "^1.8.10",
     "bunyan-winston-adapter": "^0.2.0",
     "mongoose": "^4.9.7",
+    "promisify": "0.0.3",
     "restify": "^4.3.0",
     "restify-errors": "^4.3.0",
     "winston": "^2.3.1"
